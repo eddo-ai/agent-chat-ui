@@ -149,3 +149,71 @@
     box-shadow: inset 9px 0 6px -1px rgb(0 0 0 / 0.02);
   }
 }
+
+/*
+ * Coordinator dual-screen layout. Posture is set by usePosture() as
+ * data-posture. When spanned, the env() viewport-segment values place each
+ * pane exactly on one screen and keep the hinge clear; the fallbacks are
+ * used when a posture is previewed on ordinary hardware.
+ */
+.duo {
+  display: grid;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+.duo-pane {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+.duo-hinge {
+  display: none;
+}
+
+.duo[data-posture="single"] {
+  grid-template: 1fr / 1fr;
+}
+.duo[data-posture="single"] > .duo-pane {
+  grid-area: 1 / 1;
+}
+.duo[data-posture="single"][data-secondary-open="true"] > .duo-primary,
+.duo[data-posture="single"][data-secondary-open="false"] > .duo-secondary {
+  display: none;
+}
+
+.duo[data-posture="wide"] {
+  grid-template-columns: minmax(320px, 2fr) 3fr;
+}
+.duo[data-posture="wide"] > .duo-secondary {
+  border-left: 1px solid var(--border);
+}
+
+.duo[data-posture="spanned-h"] {
+  grid-template-columns:
+    env(viewport-segment-width 0 0, calc(50% - 12px))
+    calc(
+      env(viewport-segment-left 1 0, calc(50% + 12px)) -
+        env(viewport-segment-right 0 0, calc(50% - 12px))
+    )
+    1fr;
+}
+
+.duo[data-posture="spanned-v"] {
+  grid-template-rows:
+    env(viewport-segment-height 0 0, calc(50% - 12px))
+    calc(
+      env(viewport-segment-top 0 1, calc(50% + 12px)) -
+        env(viewport-segment-bottom 0 0, calc(50% - 12px))
+    )
+    1fr;
+}
+
+.duo[data-posture="spanned-h"] > .duo-hinge,
+.duo[data-posture="spanned-v"] > .duo-hinge {
+  display: block;
+  background: var(--muted);
+}
+.duo:not([data-posture="single"]) .duo-back {
+  display: none;
+}

@@ -20,6 +20,7 @@ import {
   PanelRightOpen,
   PanelRightClose,
   SquarePen,
+  LayoutDashboard,
   XIcon,
   Plus,
 } from "lucide-react";
@@ -374,6 +375,20 @@ export function Thread() {
                 <div className="flex items-center">
                   <OpenGitHubRepo />
                 </div>
+                <TooltipIconButton
+                  size="lg"
+                  className="p-4"
+                  tooltip="Coordinator overview"
+                  variant="ghost"
+                  onClick={() =>
+                    // Keep apiUrl/assistantId so the coordinator picks up this deployment.
+                    window.location.assign(
+                      `/coordinator${window.location.search}`,
+                    )
+                  }
+                >
+                  <LayoutDashboard className="size-5" />
+                </TooltipIconButton>
                 <TooltipIconButton
                   size="lg"
                   className="p-4"

@@ -1,0 +1,54 @@
+{
+  "coordinator": { "name": "Demo coordinator" },
+  "projects": [
+    {
+      "id": "agent-sidekick",
+      "name": "Agent Sidekick",
+      "threads": [
+        {
+          "id": "demo-1",
+          "title": "Build cross-platform agent coordinator",
+          "state": "working",
+          "model": "claude-opus",
+          "updatedAt": "2026-10-24T04:30:00Z",
+          "tokens": { "used": 172000, "limit": 200000 }
+        },
+        {
+          "id": "demo-2",
+          "title": "Fix Safari export button",
+          "state": "review_ready",
+          "model": "claude-sonnet",
+          "updatedAt": "2026-10-24T03:10:00Z",
+          "tokens": { "used": 41000, "limit": 200000 }
+        },
+        {
+          "id": "demo-3",
+          "title": "Approve deploy to staging",
+          "state": "blocked",
+          "model": "gpt",
+          "updatedAt": "2026-10-24T04:01:00Z"
+        }
+      ]
+    },
+    {
+      "id": "eddo-site",
+      "name": "Eddo website",
+      "threads": [
+        {
+          "id": "demo-4",
+          "title": "Audit brand colours in Tailwind config",
+          "state": "idle",
+          "model": "claude-haiku",
+          "updatedAt": "2026-10-23T22:00:00Z",
+          "tokens": { "used": 12000, "limit": 200000 }
+        },
+        {
+          "id": "demo-5",
+          "title": "Draft release notes",
+          "state": "done",
+          "updatedAt": "2026-10-22T18:00:00Z"
+        }
+      ]
+    }
+  ]
+}
