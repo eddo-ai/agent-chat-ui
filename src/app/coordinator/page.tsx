@@ -72,7 +72,10 @@ function CoordinatorPage() {
         }}
       />
     ) : (
-      <div className="text-muted-foreground flex h-full items-center justify-center p-8 text-center text-sm">
+      <div
+        className="ios flex h-full items-center justify-center p-8 text-center text-[15px]"
+        style={{ color: "var(--ios-secondary)" }}
+      >
         Pick a thread to see it here and hand it off to another platform or
         model.
       </div>
@@ -90,49 +93,56 @@ function CoordinatorPage() {
         onRefresh={refresh}
         onOpenSettings={() => setSettingsOpen(true)}
       />
-      <label className="text-muted-foreground flex items-center gap-2 p-4 text-xs">
-        Layout
-        <select
-          className="rounded border bg-transparent px-1 py-0.5"
-          value={postureParam ?? ""}
-          onChange={(e) =>
-            setPostureParam(
-              (e.target.value || null) as (typeof POSTURES)[number] | null,
-            )
-          }
-        >
-          <option value="">auto ({posture})</option>
-          {POSTURES.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-      </label>
-      <div
-        role="radiogroup"
-        aria-label="Status board"
-        className="mx-4 mb-4 inline-flex rounded-full border p-1 text-xs"
-      >
-        {CONCEPTS.map((c) => (
-          <button
-            key={c}
-            role="radio"
-            aria-checked={concept === c}
-            onClick={() => setConcept(c)}
-            className={
-              concept === c
-                ? "bg-foreground text-background rounded-full px-3 py-1"
-                : "text-muted-foreground rounded-full px-3 py-1"
-            }
-          >
-            {CONCEPT_LABEL[c]}
-          </button>
-        ))}
+      <div className="ios pb-8">
+        <h2 className="ios-section-header">Display</h2>
+        <div className="ios-group">
+          <div className="ios-row flex-col items-stretch gap-2">
+            Status board
+            <div
+              role="radiogroup"
+              aria-label="Status board"
+              className="ios-segmented"
+            >
+              {CONCEPTS.map((c) => (
+                <button
+                  key={c}
+                  role="radio"
+                  aria-checked={concept === c}
+                  onClick={() => setConcept(c)}
+                >
+                  {CONCEPT_LABEL[c]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="ios-row">
+            Layout
+            <select
+              className="ios-select ml-auto"
+              value={postureParam ?? ""}
+              onChange={(e) =>
+                setPostureParam(
+                  (e.target.value || null) as (typeof POSTURES)[number] | null,
+                )
+              }
+            >
+              <option value="">Automatic ({posture})</option>
+              {POSTURES.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="ios-group-footer">
+          The status board shows on the upright screen when the device is folded
+          like a laptop.
+        </p>
       </div>
     </>
   );
 
   return (
-    <>
+    <div className="ios">
       <Toaster />
       <DuoLayout
         posture={posture}
@@ -158,7 +168,7 @@ function CoordinatorPage() {
         platforms={saved}
         onSave={save}
       />
-    </>
+    </div>
   );
 }
 

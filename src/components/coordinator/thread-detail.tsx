@@ -3,19 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Send,
-  ArrowLeft,
-  ArrowRightLeft,
+  ChevronLeft,
+  ChevronsUpDown,
   Copy,
   ExternalLink,
   FileDown,
+  ScrollText,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   getTranscript,
   markHandedOff,
@@ -34,7 +31,7 @@ import type {
   Project,
   TranscriptMessage,
 } from "@/lib/coordinator/types";
-import { StateBadge, TokenBar } from "./overview";
+import { StateBadge, StateIcon, TokenBar } from "./overview";
 
 const REASONS = [
   "running low on tokens",
@@ -192,91 +189,132 @@ export function ThreadDetail({
     }
   }
 
+  const context =
+    thread.tokens?.limit !== undefined
+      ? `${Math.round((thread.tokens.used / thread.tokens.limit) * 100)}% used`
+      : undefined;
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-start gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="duo-back shrink-0"
-          aria-label="Back to overview"
+    <div className="ios flex flex-col pb-8">
+      <nav className="ios-navbar flex items-center justify-between">
+        <button
+          className="duo-back ios-tint -ml-2 flex items-center text-[17px]"
           onClick={onBack}
         >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <p className="text-muted-foreground text-xs">{project.name}</p>
-          <h2 className="truncate font-semibold">{thread.title}</h2>
-          <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-xs">
-            <StateBadge state={thread.state} />
-            <span>
-              {source?.name ?? thread.platformId} · {source?.host}
-              {thread.model ? ` · ${thread.model}` : ""}
-            </span>
-            <TokenBar thread={thread} />
-            {thread.handedOffTo && <span>→ {thread.handedOffTo}</span>}
-          </div>
-        </div>
+          <ChevronLeft
+            className="size-7"
+            strokeWidth={2.25}
+          />
+          Coordinator
+        </button>
+        <span />
         {thread.url && (
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
+          <a
+            href={thread.url}
+            target="_blank"
+            rel="noreferrer"
+            className="ios-tint flex items-center gap-1 text-[17px]"
           >
-            <a
-              href={thread.url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink className="size-4" /> Open
-            </a>
-          </Button>
+            Open <ExternalLink className="size-4" />
+          </a>
+        )}
+      </nav>
+
+      <header className="flex items-start gap-3 px-4 pt-1 pb-2">
+        <StateIcon
+          state={thread.state}
+          className="mt-1 size-10"
+        />
+        <div className="min-w-0">
+          <p className="ios-footnote">{project.name}</p>
+          <h2 className="ios-title2 line-clamp-2">{thread.title}</h2>
+        </div>
+      </header>
+
+      <div className="ios-group mt-2">
+        <div className="ios-row">
+          Status
+          <span className="ios-row-value">
+            <StateBadge state={thread.state} />
+          </span>
+        </div>
+        <div className="ios-row">
+          Platform
+          <span className="ios-row-value truncate">
+            {source?.name ?? thread.platformId} · {source?.host}
+          </span>
+        </div>
+        {thread.model && (
+          <div className="ios-row">
+            Model
+            <span className="ios-row-value">{thread.model}</span>
+          </div>
+        )}
+        {context && (
+          <div className="ios-row">
+            Context
+            <span className="ios-row-value flex items-center gap-2">
+              <TokenBar thread={thread} />
+              <span style={low ? { color: "var(--ios-red)" } : undefined}>
+                {context}
+              </span>
+            </span>
+          </div>
+        )}
+        {thread.handedOffTo && (
+          <div className="ios-row">
+            Handed off to
+            <span className="ios-row-value">{thread.handedOffTo}</span>
+          </div>
         )}
       </div>
 
-      <section className="flex flex-col gap-3 rounded-lg border p-4">
-        <h3 className="flex items-center gap-2 text-sm font-semibold">
-          <ArrowRightLeft className="size-4" /> Hand off this thread
-          {low && (
-            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-normal text-amber-800">
-              suggested: low on tokens
-            </span>
-          )}
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="handoff-target">To platform</Label>
-            <select
-              id="handoff-target"
-              className="h-9 rounded-md border bg-transparent px-2 text-sm"
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-            >
-              {targets.map((t) => (
-                <option
-                  key={t.id}
-                  value={t.id}
-                >
-                  {t.name} ({t.host})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="handoff-model">Model</Label>
-            <Input
-              id="handoff-model"
-              placeholder={target?.model ?? "platform default"}
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="handoff-reason">Why</Label>
+      <h3 className="ios-section-header flex items-center gap-2">
+        Hand off
+        {low && (
+          <span
+            className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white normal-case"
+            style={{ background: "var(--ios-red)" }}
+          >
+            Suggested · low on tokens
+          </span>
+        )}
+      </h3>
+      <div className="ios-group">
+        <label className="ios-row">
+          To
+          <select
+            id="handoff-target"
+            className="ios-select ml-auto min-w-0 flex-1"
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
+          >
+            {targets.map((t) => (
+              <option
+                key={t.id}
+                value={t.id}
+              >
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <ChevronsUpDown className="ios-chevron size-4" />
+        </label>
+        <label className="ios-row">
+          Model
+          <input
+            id="handoff-model"
+            className="ios-input min-w-0 flex-1 text-right"
+            placeholder={target?.model ?? "Default"}
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+          />
+        </label>
+        <label className="ios-row">
+          Reason
           <select
             id="handoff-reason"
-            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            className="ios-select ml-auto min-w-0 flex-1"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           >
@@ -284,86 +322,97 @@ export function ThreadDetail({
               <option key={r}>{r}</option>
             ))}
           </select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="handoff-brief">Brief for the next agent</Label>
-          <Textarea
-            id="handoff-brief"
-            placeholder="Goal, decisions made so far, what to do next..."
-            value={brief}
-            onChange={(e) => setBrief(e.target.value)}
-          />
-          <p className="text-muted-foreground text-xs">
-            {transcript.length > 0
-              ? `${transcript.length} messages from the thread are included, trimmed to fit.`
-              : "No transcript available from this platform, so the brief carries the context."}
-          </p>
-        </div>
+          <ChevronsUpDown className="ios-chevron size-4" />
+        </label>
+      </div>
 
-        <div className="flex flex-wrap gap-2">
-          <motion.div
-            className="relative"
-            whileTap={{ scale: 0.94 }}
-          >
-            <Button
-              disabled={!target || busy}
-              onClick={handOff}
+      <h3 className="ios-section-header">Brief for the next agent</h3>
+      <div className="ios-group">
+        <textarea
+          id="handoff-brief"
+          rows={4}
+          className="ios-input ios-row resize-none"
+          placeholder="Goal, decisions so far, what to do next"
+          value={brief}
+          onChange={(e) => setBrief(e.target.value)}
+        />
+      </div>
+      <p className="ios-group-footer">
+        {transcript.length > 0
+          ? `${transcript.length} messages from the thread are included, trimmed to fit.`
+          : "No transcript from this platform, so the brief carries the context."}
+      </p>
+
+      <motion.div
+        className="relative mx-4 mt-6"
+        whileTap={{ scale: 0.97 }}
+      >
+        <button
+          className="ios-button-filled"
+          disabled={!target || busy}
+          onClick={handOff}
+        >
+          <Send className="size-[18px]" />
+          {target?.kind === "langgraph"
+            ? `Start on ${target.name}`
+            : `Hand Off to ${target?.name ?? "..."}`}
+        </button>
+        <AnimatePresence>
+          {sent > 0 && (
+            <motion.span
+              key={sent}
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-1/2"
+              initial={{ x: 0, y: "-50%", opacity: 1, rotate: 0, scale: 1 }}
+              animate={{ x: 220, y: -140, opacity: 0, rotate: -25, scale: 1.4 }}
+              transition={{ duration: 0.8, ease: [0.3, 0, 0.2, 1] }}
+              onAnimationComplete={() => setSent(0)}
             >
-              <Send className="size-4" />
-              {target?.kind === "langgraph"
-                ? `Start on ${target.name}`
-                : `Hand off to ${target?.name ?? "..."}`}
-            </Button>
-            <AnimatePresence>
-              {sent > 0 && (
-                <motion.span
-                  key={sent}
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 left-4"
-                  initial={{ x: 0, y: "-50%", opacity: 1, rotate: 0 }}
-                  animate={{ x: 260, y: -90, opacity: 0, rotate: -20 }}
-                  transition={{ duration: 0.8, ease: [0.3, 0, 0.2, 1] }}
-                  onAnimationComplete={() => setSent(0)}
-                >
-                  <Send className="size-5 text-sky-500" />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.div>
-          <Button
-            variant="outline"
-            disabled={!prompt}
-            onClick={() =>
-              navigator.clipboard
-                .writeText(prompt)
-                .then(() => toast.success("Handoff prompt copied"))
-            }
-          >
-            <Copy className="size-4" /> Copy prompt
-          </Button>
-          <Button
-            variant="outline"
-            disabled={!prompt}
-            onClick={() => download(fileName, prompt)}
-          >
-            <FileDown className="size-4" /> Download .md
-          </Button>
-        </div>
-        {target?.kind === "manual" && target.cliCommand && (
-          <code className="bg-muted rounded px-2 py-1 text-xs">
-            {target.cliCommand.replace("{file}", fileName)}
-          </code>
-        )}
+              <Send
+                className="size-6"
+                style={{ color: "var(--ios-blue)" }}
+              />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
+      <div className="ios-group mt-6">
+        <button
+          className="ios-row ios-tint"
+          disabled={!prompt}
+          onClick={() =>
+            navigator.clipboard
+              .writeText(prompt)
+              .then(() => toast.success("Handoff prompt copied"))
+          }
+        >
+          <Copy className="size-5" /> Copy Prompt
+        </button>
+        <button
+          className="ios-row ios-tint"
+          disabled={!prompt}
+          onClick={() => download(fileName, prompt)}
+        >
+          <FileDown className="size-5" /> Save as Markdown
+        </button>
         <details>
-          <summary className="text-muted-foreground cursor-pointer text-xs">
-            Preview handoff prompt
+          <summary className="ios-row ios-tint cursor-pointer list-none">
+            <ScrollText className="size-5" /> Preview Prompt
           </summary>
-          <pre className="bg-muted mt-2 max-h-80 overflow-auto rounded p-3 text-xs whitespace-pre-wrap">
+          <pre className="max-h-80 overflow-auto px-4 pb-4 font-mono text-xs whitespace-pre-wrap">
             {prompt}
           </pre>
         </details>
-      </section>
+      </div>
+      {target?.kind === "manual" && target.cliCommand && (
+        <p className="ios-group-footer">
+          Run it with{" "}
+          <code className="font-mono">
+            {target.cliCommand.replace("{file}", fileName)}
+          </code>
+        </p>
+      )}
     </div>
   );
 }

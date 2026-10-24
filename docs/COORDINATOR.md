@@ -97,3 +97,24 @@ grid tracks), the status board's counters pop when they change, working
 threads shimmer and threads that need you breathe, tiles reflow with spring
 layout animations, and a handed-off thread flies off the board as the send
 icon launches. All of it is turned off under `prefers-reduced-motion`.
+
+## Look and feel
+
+The coordinator uses iOS design language: the system font stack (SF on Apple
+devices), large-title navigation bars, inset grouped lists, iOS system
+colours, capsule buttons and segmented controls, with dark mode following the
+device. The status boards use Liquid Glass panes over a slowly drifting colour
+field whose hue follows the mood of the board (amber when something needs
+you, blue when agents are busy, green when all is clear).
+
+## Status board concepts
+
+Four boards for the laptop posture's upright screen, picked from the Display
+section on the flat screen or with `?concept=`:
+
+| Concept    | Idea                                                                      |
+| ---------- | ------------------------------------------------------------------------- |
+| `tiles`    | Counters plus one glass tile per live thread                              |
+| `lanes`    | Needs you / Working / Idle columns; cards glide between lanes on change   |
+| `bubbles`  | A floating bubble per thread; size is context used, needs-you bubbles bob |
+| `headline` | One sentence readable across a room ("2 threads need you") and the names  |

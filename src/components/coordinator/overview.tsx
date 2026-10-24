@@ -1,9 +1,22 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { motion } from "framer-motion";
-import { RefreshCw, Settings, Download, BatteryLow } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  Activity,
+  BatteryLow,
+  Check,
+  ChevronRight,
+  Ellipsis,
+  Eye,
+  Hand,
+  Moon,
+  RefreshCw,
+  Send,
+  Share,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isRunningLow, tokenRatio } from "@/lib/coordinator/handoff";
 import type {
@@ -14,39 +27,82 @@ import type {
   ThreadState,
 } from "@/lib/coordinator/types";
 
-export const STATE_STYLE: Record<ThreadState, { label: string; dot: string }> =
-  {
-    blocked: { label: "Needs you", dot: "bg-amber-500" },
-    review_ready: { label: "Review", dot: "bg-violet-500" },
-    failed: { label: "Failed", dot: "bg-red-500" },
-    working: { label: "Working", dot: "bg-sky-500 animate-pulse" },
-    idle: { label: "Idle", dot: "bg-gray-400" },
-    handed_off: { label: "Handed off", dot: "bg-gray-300" },
-    done: { label: "Done", dot: "bg-emerald-500" },
-  };
+export const STATE_STYLE: Record<
+  ThreadState,
+  { label: string; color: string; Icon: LucideIcon }
+> = {
+  blocked: { label: "Needs you", color: "var(--ios-orange)", Icon: Hand },
+  review_ready: { label: "Review", color: "var(--ios-purple)", Icon: Eye },
+  failed: { label: "Failed", color: "var(--ios-red)", Icon: TriangleAlert },
+  working: { label: "Working", color: "var(--ios-blue)", Icon: Activity },
+  idle: { label: "Idle", color: "var(--ios-gray)", Icon: Moon },
+  handed_off: { label: "Handed off", color: "var(--ios-gray)", Icon: Send },
+  done: { label: "Done", color: "var(--ios-green)", Icon: Check },
+};
+
+/** iOS-style round glyph in the state's system colour. */
+export function StateIcon({
+  state,
+  className,
+}: {
+  state: ThreadState;
+  className?: string;
+}) {
+  const { color, Icon } = STATE_STYLE[state];
+  return (
+    <span
+      className={cn("ios-icon", className)}
+      style={{ background: color }}
+    >
+      <Icon
+        className="size-4"
+        strokeWidth={2.5}
+      />
+    </span>
+  );
+}
 
 export function StateBadge({ state }: { state: ThreadState }) {
   const s = STATE_STYLE[state];
   return (
-    <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
-      <span className={cn("size-2 rounded-full", s.dot)} />
+    <span
+      className="inline-flex items-center gap-1.5"
+      style={{ color: s.color }}
+    >
+      <span
+        className={cn(
+          "size-2 rounded-full",
+          state === "working" && "animate-pulse",
+        )}
+        style={{ background: s.color }}
+      />
       {s.label}
     </span>
   );
 }
 
-export function TokenBar({ thread }: { thread: CoordThread }) {
+export function TokenBar({
+  thread,
+  className,
+}: {
+  thread: CoordThread;
+  className?: string;
+}) {
   const ratio = tokenRatio(thread.tokens);
   if (ratio === undefined) return null;
   const low = isRunningLow(thread.tokens);
   return (
     <div
-      className="bg-muted h-1 w-16 overflow-hidden rounded-full"
+      className={cn("h-1 w-16 overflow-hidden rounded-full", className)}
+      style={{ background: "var(--ios-fill)" }}
       title={`${thread.tokens?.used.toLocaleString()} / ${thread.tokens?.limit?.toLocaleString()} tokens`}
     >
       <div
-        className={cn("h-full", low ? "bg-amber-500" : "bg-sky-500")}
-        style={{ width: `${Math.min(100, ratio * 100)}%` }}
+        className="h-full rounded-full"
+        style={{
+          width: `${Math.min(100, ratio * 100)}%`,
+          background: low ? "var(--ios-orange)" : "var(--ios-blue)",
+        }}
       />
     </div>
   );
@@ -110,139 +166,196 @@ export function Overview({
   }, {});
   const lowCount = all.filter((t) => isRunningLow(t.tokens)).length;
 
+  const summary: {
+    label: string;
+    count: number;
+    color: string;
+    Icon: LucideIcon;
+  }[] = [
+    {
+      label: "Needs you",
+      count:
+        (counts.blocked ?? 0) +
+        (counts.review_ready ?? 0) +
+        (counts.failed ?? 0),
+      color: "var(--ios-orange)",
+      Icon: Hand,
+    },
+    {
+      label: "Working",
+      count: counts.working ?? 0,
+      color: "var(--ios-blue)",
+      Icon: Activity,
+    },
+    {
+      label: "Idle",
+      count: counts.idle ?? 0,
+      color: "var(--ios-gray)",
+      Icon: Moon,
+    },
+    {
+      label: "Low tokens",
+      count: lowCount,
+      color: "var(--ios-red)",
+      Icon: BatteryLow,
+    },
+  ];
+
   return (
-    <div className="flex flex-col">
-      <header className="bg-background/95 sticky top-0 z-10 flex flex-col gap-3 border-b p-4 backdrop-blur">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">
-              Coordinator
-            </h1>
-            <p className="text-muted-foreground text-xs">
-              {all.length} threads · {projects.length} projects ·{" "}
-              {platforms.length} platforms
-            </p>
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Export as feed"
-              title="Export as feed"
-              onClick={() =>
-                downloadJson("coordinator-feed.json", toFeed(projects))
-              }
-            >
-              <Download className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Refresh"
-              onClick={onRefresh}
-            >
-              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Platforms"
-              onClick={onOpenSettings}
-            >
-              <Settings className="size-4" />
-            </Button>
-          </div>
+    <div className="ios flex flex-col pb-6">
+      <header className="ios-navbar">
+        <div className="flex justify-end gap-2">
+          <button
+            className="ios-toolbar-button"
+            aria-label="Export as feed"
+            title="Export as feed"
+            onClick={() =>
+              downloadJson("coordinator-feed.json", toFeed(projects))
+            }
+          >
+            <Share className="size-[18px]" />
+          </button>
+          <button
+            className="ios-toolbar-button"
+            aria-label="Refresh"
+            onClick={onRefresh}
+          >
+            <RefreshCw
+              className={cn("size-[18px]", loading && "animate-spin")}
+            />
+          </button>
+          <button
+            className="ios-toolbar-button"
+            aria-label="Platforms"
+            onClick={onOpenSettings}
+          >
+            <Ellipsis className="size-[18px]" />
+          </button>
         </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {(Object.keys(STATE_STYLE) as ThreadState[])
-            .filter((s) => counts[s])
-            .map((s) => (
-              <span
-                key={s}
-                className="inline-flex items-center gap-1"
-              >
-                <StateBadge state={s} />
-                <span className="text-xs font-medium">{counts[s]}</span>
-              </span>
-            ))}
-          {lowCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-              <BatteryLow className="size-3.5" />
-              {lowCount} low on tokens
-            </span>
-          )}
-        </div>
+        <h1 className="ios-large-title mt-1">Coordinator</h1>
+        <p className="ios-footnote">
+          {all.length} threads · {projects.length} projects · {platforms.length}{" "}
+          platforms
+        </p>
       </header>
 
-      {Object.entries(errors).map(([id, msg]) => (
-        <p
-          key={id}
-          className="mx-4 mt-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700"
-        >
-          {byId.get(id)?.name ?? id}: {msg}
-        </p>
-      ))}
+      <div className="mx-4 mt-2 grid grid-cols-2 gap-3">
+        {summary.map(({ label, count, color, Icon }) => (
+          <div
+            key={label}
+            className="ios-summary-card"
+          >
+            <div className="flex items-start justify-between">
+              <span
+                className="ios-icon"
+                style={{ background: color }}
+              >
+                <Icon
+                  className="size-4"
+                  strokeWidth={2.5}
+                />
+              </span>
+              <span className="text-[28px] leading-none font-bold tabular-nums">
+                {count}
+              </span>
+            </div>
+            <span
+              className="text-[15px] font-semibold"
+              style={{ color: "var(--ios-secondary)" }}
+            >
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {Object.keys(errors).length > 0 && (
+        <>
+          <h2 className="ios-section-header">Couldn&apos;t reach</h2>
+          <div className="ios-group">
+            {Object.entries(errors).map(([id, msg]) => (
+              <p
+                key={id}
+                className="ios-row text-[15px]"
+                style={{ color: "var(--ios-red)" }}
+              >
+                {byId.get(id)?.name ?? id}: {msg}
+              </p>
+            ))}
+          </div>
+        </>
+      )}
 
       {all.length === 0 && !loading && (
-        <div className="text-muted-foreground p-6 text-sm">
-          No threads yet. Add a LangGraph deployment or a coordinator feed under{" "}
+        <p className="ios-group-footer mt-6 text-center">
+          No threads yet. Add a LangGraph deployment or a coordinator feed in{" "}
           <button
-            className="underline"
+            className="ios-tint"
             onClick={onOpenSettings}
           >
             Platforms
           </button>
           .
-        </div>
+        </p>
       )}
 
       {projects.map((project) => (
-        <div
-          key={project.id}
-          className="border-b py-2"
-        >
-          <h2 className="text-muted-foreground px-4 py-1 text-xs font-semibold tracking-wide uppercase">
-            {project.name}
-          </h2>
-          <ul>
+        <section key={project.id}>
+          <h2 className="ios-section-header">{project.name}</h2>
+          <ul
+            className="ios-group"
+            style={{ ["--ios-separator-inset" as string]: "58px" }}
+          >
             {project.threads.map((t) => {
               const platform = byId.get(t.platformId);
+              const key = `${t.platformId}:${t.id}`;
               return (
                 <motion.li
-                  key={`${t.platformId}:${t.id}`}
+                  key={key}
                   layout
                   transition={{ type: "spring", stiffness: 400, damping: 34 }}
                 >
                   <button
                     onClick={() => onSelect(t)}
+                    data-selected={selectedId === key}
                     className={cn(
-                      "hover:bg-muted/60 flex w-full flex-col gap-1 px-4 py-2 text-left",
-                      selectedId === `${t.platformId}:${t.id}` && "bg-muted",
-                      t.state === "handed_off" && "opacity-60",
+                      "ios-row",
+                      t.state === "handed_off" && "opacity-50",
                     )}
                   >
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm">{t.title}</span>
-                      <StateBadge state={t.state} />
-                    </span>
-                    <span className="text-muted-foreground flex items-center gap-2 text-xs">
-                      <span className="truncate">
-                        {platform?.name ?? t.platformId} · {platform?.host}
+                    <StateIcon state={t.state} />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate">{t.title}</span>
+                        {isRunningLow(t.tokens) && (
+                          <BatteryLow
+                            className="size-4 shrink-0"
+                            style={{ color: "var(--ios-red)" }}
+                            aria-label="Low on tokens"
+                          />
+                        )}
+                      </span>
+                      <span
+                        className="truncate text-[15px] leading-5"
+                        style={{ color: "var(--ios-secondary)" }}
+                      >
+                        {platform?.name ?? t.platformId}
                         {t.model ? ` · ${t.model}` : ""}
                       </span>
-                      <TokenBar thread={t} />
-                      <span className="ml-auto shrink-0">
-                        {formatDistanceToNow(new Date(t.updatedAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
                     </span>
+                    <span
+                      className="shrink-0 text-[15px]"
+                      style={{ color: "var(--ios-secondary)" }}
+                    >
+                      {formatDistanceToNowStrict(new Date(t.updatedAt))}
+                    </span>
+                    <ChevronRight className="ios-chevron size-4" />
                   </button>
                 </motion.li>
               );
             })}
           </ul>
-        </div>
+        </section>
       ))}
     </div>
   );
