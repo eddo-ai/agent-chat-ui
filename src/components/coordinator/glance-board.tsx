@@ -13,33 +13,38 @@ import type {
 import { STATE_STYLE } from "./overview";
 
 /** The states the board leads with, in the order they need attention. */
-const HEADLINE: { label: string; states: ThreadState[]; tone: string }[] = [
+export const HEADLINE: {
+  label: string;
+  states: ThreadState[];
+  tone: string;
+}[] = [
   {
     label: "Needs you",
     states: ["blocked", "review_ready", "failed"],
-    tone: "bg-amber-500 text-white",
+    tone: "glass-amber",
   },
-  { label: "Working", states: ["working"], tone: "bg-sky-500 text-white" },
-  { label: "Idle", states: ["idle"], tone: "bg-gray-400 text-white" },
+  { label: "Working", states: ["working"], tone: "glass-sky" },
+  { label: "Idle", states: ["idle"], tone: "glass-gray" },
 ];
 
-function rank(state: ThreadState): number {
+export function rank(state: ThreadState): number {
   const i = HEADLINE.findIndex((h) => h.states.includes(state));
   return i < 0 ? HEADLINE.length : i;
 }
 
-const TILE_TONE: Record<ThreadState, string> = {
-  blocked: "border-amber-500 bg-amber-50",
-  review_ready: "border-violet-500 bg-violet-50",
-  failed: "border-red-500 bg-red-50",
-  working: "border-sky-500 bg-sky-50",
-  idle: "border-gray-300",
-  handed_off: "border-gray-200 opacity-50",
-  done: "border-emerald-500/40 opacity-70",
+/** Liquid Glass tint per state (see .glass-* in globals.css). */
+export const GLASS_TINT: Record<ThreadState, string> = {
+  blocked: "glass-amber",
+  review_ready: "glass-violet",
+  failed: "glass-red",
+  working: "glass-sky",
+  idle: "glass-gray",
+  handed_off: "glass-gray opacity-50",
+  done: "glass-gray opacity-70",
 };
 
 /** Ambient motion: working threads shimmer, ones that need you breathe. */
-const TILE_MOTION: Partial<Record<ThreadState, string>> = {
+export const TILE_MOTION: Partial<Record<ThreadState, string>> = {
   working: "glance-working",
   blocked: "glance-breathe",
   review_ready: "glance-breathe",
@@ -47,7 +52,7 @@ const TILE_MOTION: Partial<Record<ThreadState, string>> = {
 };
 
 /** A big number that pops when it changes. */
-function Count({ value }: { value: number }) {
+export function Count({ value }: { value: number }) {
   return (
     <AnimatePresence
       mode="popLayout"
@@ -68,36 +73,46 @@ function Count({ value }: { value: number }) {
 }
 
 /**
+ * Threads still in play, most urgent first, with their project name.
+ * Finished and handed-off threads are left out to keep boards scannable.
+ */
+export function liveThreads(projects: Project[]) {
+  return projects
+    .flatMap((p) => p.threads.map((t) => ({ t, project: p.name })))
+    .filter(({ t }) => t.state !== "done" && t.state !== "handed_off")
+    .sort((a, b) => rank(a.t.state) - rank(b.t.state));
+}
+
+export interface BoardProps {
+  projects: Project[];
+  platforms: Platform[];
+  selectedId?: string;
+  onSelect: (thread: CoordThread) => void;
+}
+
+/**
  * Status at a glance, for the upright screen of a device folded like a
  * laptop: large type and colour blocks readable from across a desk.
- * Finished and handed-off threads are left out to keep it scannable.
+ * This is the "tiles" concept; see board-concepts.tsx for the others.
  */
 export function GlanceBoard({
   projects,
   platforms,
   selectedId,
   onSelect,
-}: {
-  projects: Project[];
-  platforms: Platform[];
-  selectedId?: string;
-  onSelect: (thread: CoordThread) => void;
-}) {
+}: BoardProps) {
   const reduce = useReducedMotion();
   const byId = new Map(platforms.map((p) => [p.id, p]));
-  const live = projects
-    .flatMap((p) => p.threads.map((t) => ({ t, project: p.name })))
-    .filter(({ t }) => t.state !== "done" && t.state !== "handed_off")
-    .sort((a, b) => rank(a.t.state) - rank(b.t.state));
+  const live = liveThreads(projects);
   const low = live.filter(({ t }) => isRunningLow(t.tokens)).length;
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <div className="flex h-full flex-col gap-4 p-4 text-gray-900">
       <div className="grid grid-cols-4 gap-3">
         {HEADLINE.map((h) => (
           <div
             key={h.label}
-            className={cn("rounded-xl px-4 py-3", h.tone)}
+            className={cn("glass rounded-[28px] px-5 py-4", h.tone)}
           >
             <Count
               value={live.filter(({ t }) => h.states.includes(t.state)).length}
@@ -107,8 +122,8 @@ export function GlanceBoard({
         ))}
         <div
           className={cn(
-            "rounded-xl px-4 py-3",
-            low ? "bg-orange-600 text-white" : "bg-muted text-muted-foreground",
+            "glass rounded-[28px] px-5 py-4",
+            low ? "glass-orange" : "glass-gray text-gray-500",
           )}
         >
           <Count value={low} />
@@ -138,8 +153,8 @@ export function GlanceBoard({
                 <button
                   onClick={() => onSelect(t)}
                   className={cn(
-                    "flex h-full w-full flex-col gap-2 rounded-xl border-y border-r border-l-8 p-3 text-left",
-                    TILE_TONE[t.state],
+                    "glass flex h-full w-full flex-col gap-2 rounded-3xl p-4 text-left",
+                    GLASS_TINT[t.state],
                     !reduce && TILE_MOTION[t.state],
                     selectedId === key && "ring-foreground ring-2",
                   )}
@@ -155,12 +170,12 @@ export function GlanceBoard({
                   <span className="line-clamp-2 text-lg leading-snug font-medium">
                     {t.title}
                   </span>
-                  <span className="text-muted-foreground truncate text-xs">
+                  <span className="truncate text-xs text-gray-700">
                     {project} · {byId.get(t.platformId)?.name ?? t.platformId}
                     {t.model ? ` · ${t.model}` : ""}
                   </span>
                   {ratio !== undefined && (
-                    <span className="bg-background/70 h-1.5 overflow-hidden rounded-full">
+                    <span className="h-1.5 overflow-hidden rounded-full bg-white/50">
                       <span
                         className={cn(
                           "block h-full",
