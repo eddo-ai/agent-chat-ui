@@ -181,6 +181,7 @@ async function listFeedThreads(platform: FeedPlatform): Promise<CoordThread[]> {
       platformId: platform.id,
       projectId: p.id,
       projectName: p.name,
+      projectGoal: p.goal,
       model: t.model ?? platform.model,
     })),
   );

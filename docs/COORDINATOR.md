@@ -109,12 +109,27 @@ you, blue when agents are busy, green when all is clear).
 
 ## Status board concepts
 
-Four boards for the laptop posture's upright screen, picked from the Display
-section on the flat screen or with `?concept=`:
+Boards for the laptop posture's upright screen, picked from the Display
+section on the flat screen or with `?concept=`. `projects` is the default:
 
 | Concept    | Idea                                                                      |
 | ---------- | ------------------------------------------------------------------------- |
+| `projects` | One lane per project with its goal, agent threads and to-dos (see below)  |
 | `tiles`    | Counters plus one glass tile per live thread                              |
 | `lanes`    | Needs you / Working / Idle columns; cards glide between lanes on change   |
 | `bubbles`  | A floating bubble per thread; size is context used, needs-you bubbles bob |
 | `headline` | One sentence readable across a room ("2 threads need you") and the names  |
+
+### Project lanes
+
+Each project gets a tall glass lane holding its goal, its agent threads and a
+to-do list. Lanes scroll left to right; any lane with a thread that needs you
+glides to the front on its own, then working lanes, then quiet ones, keeping
+your manual order within each group. The last slot is an Add Project card,
+like the wallpaper gallery on iPhone.
+
+Press and hold the board to edit it: lanes jiggle, drag to reorder, tap the
+minus to hide a lane, edit the name and goal in place, and pick a wallpaper
+per lane from presets or your own photo (scaled down and kept in local
+storage). Feeds can supply a project `goal`; local edits override it. Board
+state lives in `localStorage` under `coord:board`.

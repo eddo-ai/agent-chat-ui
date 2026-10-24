@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { listThreads } from "./adapters";
 import type {
+  BoardState,
   CoordThread,
   HandoffRecord,
   Platform,
@@ -12,6 +13,7 @@ import type {
 
 import { PLATFORMS_KEY } from "./credentials";
 const HANDOFFS_KEY = "coord:handoffs";
+const BOARD_KEY = "coord:board";
 
 /**
  * Manual targets every user gets, so handoff works with nothing configured
@@ -129,6 +131,7 @@ export function groupByProject(threads: CoordThread[]): Project[] {
       threads: [],
     };
     if (t.projectName) project.name = t.projectName;
+    if (t.projectGoal) project.goal = t.projectGoal;
     project.threads.push(t);
     byId.set(t.projectId, project);
   }
@@ -190,4 +193,105 @@ export function useOverview(
 
   const projects = useMemo(() => groupByProject(merged), [merged]);
   return { projects, threads: merged, errors, loading, refresh };
+}
+
+const EMPTY_BOARD: BoardState = { order: [], hidden: [], projects: {} };
+
+/** Rank used to pull lanes forward: needs you, then working, then the rest. */
+export function attentionRank(project: Project): number {
+  const states = project.threads.map((t) => t.state);
+  if (
+    states.some(
+      (s) => s === "blocked" || s === "review_ready" || s === "failed",
+    )
+  )
+    return 0;
+  if (states.includes("working")) return 1;
+  return 2;
+}
+
+/**
+ * The project board: projects from every platform plus ones added on the
+ * board, with local goals, to-dos, manual order and hidden lanes. Lanes that
+ * need attention sort first; within the same attention, manual order wins.
+ */
+export function useProjectBoard(projects: Project[]) {
+  const [board, setBoard] = useState<BoardState>(EMPTY_BOARD);
+  useEffect(() => setBoard(read(BOARD_KEY, EMPTY_BOARD)), []);
+
+  const update = useCallback((fn: (prev: BoardState) => BoardState) => {
+    setBoard((prev) => {
+      const next = fn(prev);
+      write(BOARD_KEY, next);
+      return next;
+    });
+  }, []);
+
+  const merged = useMemo(() => {
+    const byId = new Map(projects.map((p) => [p.id, { ...p }]));
+    for (const [id, meta] of Object.entries(board.projects)) {
+      if (meta.local && !byId.has(id)) {
+        byId.set(id, { id, name: meta.name ?? "New project", threads: [] });
+      }
+    }
+    const position = (id: string) => {
+      const i = board.order.indexOf(id);
+      return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return [...byId.values()]
+      .filter((p) => !board.hidden.includes(p.id))
+      .map((p) => {
+        const meta = board.projects[p.id] ?? {};
+        return {
+          ...p,
+          name: meta.name || p.name,
+          goal: meta.goal ?? p.goal,
+          tasks: meta.tasks ?? [],
+          wallpaper: meta.wallpaper,
+        };
+      })
+      .sort(
+        (a, b) =>
+          position(a.id) - position(b.id) || a.name.localeCompare(b.name),
+      );
+  }, [projects, board]);
+
+  // Stable sort keeps manual order within each attention level.
+  const lanes = useMemo(
+    () => [...merged].sort((a, b) => attentionRank(a) - attentionRank(b)),
+    [merged],
+  );
+
+  const patchProject = useCallback(
+    (id: string, patch: BoardState["projects"][string]) =>
+      update((prev) => ({
+        ...prev,
+        projects: {
+          ...prev.projects,
+          [id]: { ...prev.projects[id], ...patch },
+        },
+      })),
+    [update],
+  );
+
+  return {
+    lanes,
+    /** Lanes in manual order only, for rearranging in edit mode. */
+    manualLanes: merged,
+    hiddenCount: board.hidden.length,
+    patchProject,
+    setOrder: (order: string[]) => update((prev) => ({ ...prev, order })),
+    hide: (id: string) =>
+      update((prev) => ({ ...prev, hidden: [...prev.hidden, id] })),
+    showAll: () => update((prev) => ({ ...prev, hidden: [] })),
+    addProject: (name: string) => {
+      const id = `local-${Date.now().toString(36)}`;
+      update((prev) => ({
+        ...prev,
+        order: [...prev.order, id],
+        projects: { ...prev.projects, [id]: { name, local: true } },
+      }));
+      return id;
+    },
+  };
 }

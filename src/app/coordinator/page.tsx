@@ -39,7 +39,7 @@ function CoordinatorPage() {
   const [demo] = useQueryState("demo", parseAsBoolean.withDefault(false));
   const [concept, setConcept] = useQueryState(
     "concept",
-    parseAsStringLiteral(CONCEPTS).withDefault("tiles"),
+    parseAsStringLiteral(CONCEPTS).withDefault("projects"),
   );
   const [selected, setSelected] = useQueryState("thread");
   const [settingsOpen, setSettingsOpen] = useState(false);

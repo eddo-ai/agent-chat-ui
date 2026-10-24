@@ -89,6 +89,7 @@ export interface CoordThread {
   projectId: string;
   /** Display name for the project, when the platform knows one. */
   projectName?: string;
+  projectGoal?: string;
   title: string;
   state: ThreadState;
   model?: string;
@@ -103,7 +104,35 @@ export interface CoordThread {
 export interface Project {
   id: string;
   name: string;
+  /** What the project is for, shown at the top of its lane. */
+  goal?: string;
   threads: CoordThread[];
+}
+
+/** A to-do the user keeps on a project lane, beside its agent threads. */
+export interface ProjectTask {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+/** Local edits to the project board: order, hidden lanes and project notes. */
+export interface BoardState {
+  /** Manual lane order; projects not listed go after, by name. */
+  order: string[];
+  hidden: string[];
+  /** Per project overrides and notes, including projects added on the board. */
+  projects: Record<
+    string,
+    {
+      name?: string;
+      goal?: string;
+      tasks?: ProjectTask[];
+      /** A preset wallpaper id, or a photo as a data: URL. */
+      wallpaper?: string;
+      local?: boolean;
+    }
+  >;
 }
 
 /** Format other coordinators publish so they show up in this overview. */
@@ -113,6 +142,7 @@ export const CoordinatorFeedSchema = z.object({
     z.object({
       id: z.string(),
       name: z.string().optional(),
+      goal: z.string().optional(),
       threads: z.array(
         z.object({
           id: z.string(),

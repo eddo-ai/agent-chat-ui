@@ -1,5 +1,7 @@
 {
-  "coordinator": { "name": "Demo coordinator" },
+  "coordinator": {
+    "name": "Demo coordinator"
+  },
   "projects": [
     {
       "id": "agent-sidekick",
@@ -11,7 +13,10 @@
           "state": "working",
           "model": "claude-opus",
           "updatedAt": "2026-10-24T04:30:00Z",
-          "tokens": { "used": 172000, "limit": 200000 }
+          "tokens": {
+            "used": 172000,
+            "limit": 200000
+          }
         },
         {
           "id": "demo-2",
@@ -19,7 +24,10 @@
           "state": "review_ready",
           "model": "claude-sonnet",
           "updatedAt": "2026-10-24T03:10:00Z",
-          "tokens": { "used": 41000, "limit": 200000 }
+          "tokens": {
+            "used": 41000,
+            "limit": 200000
+          }
         },
         {
           "id": "demo-3",
@@ -28,7 +36,8 @@
           "model": "gpt",
           "updatedAt": "2026-10-24T04:01:00Z"
         }
-      ]
+      ],
+      "goal": "An agent coordinator for agent coordinators: see every thread at a glance and hand work to the best platform."
     },
     {
       "id": "eddo-site",
@@ -40,13 +49,35 @@
           "state": "idle",
           "model": "claude-haiku",
           "updatedAt": "2026-10-23T22:00:00Z",
-          "tokens": { "used": 12000, "limit": 200000 }
+          "tokens": {
+            "used": 12000,
+            "limit": 200000
+          }
         },
         {
           "id": "demo-5",
           "title": "Draft release notes",
           "state": "done",
           "updatedAt": "2026-10-22T18:00:00Z"
+        }
+      ],
+      "goal": "Ship the refreshed Eddo website with on-brand colours and release notes."
+    },
+    {
+      "id": "research",
+      "name": "Research",
+      "goal": "Survey agent orchestrators (herdr and friends) for ideas worth borrowing.",
+      "threads": [
+        {
+          "id": "demo-6",
+          "title": "Compare herdr and corgi workflows",
+          "state": "working",
+          "model": "claude-sonnet",
+          "updatedAt": "2026-10-24T08:50:00Z",
+          "tokens": {
+            "used": 60000,
+            "limit": 200000
+          }
         }
       ]
     }

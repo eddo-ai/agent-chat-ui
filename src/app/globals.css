@@ -553,12 +553,30 @@
   }
 }
 
+/* Edit mode on the project board: lanes jiggle like Home Screen icons. */
+.lane-jiggle-a {
+  animation: lane-jiggle 0.32s ease-in-out infinite alternate;
+}
+.lane-jiggle-b {
+  animation: lane-jiggle 0.32s ease-in-out -0.16s infinite alternate-reverse;
+}
+@keyframes lane-jiggle {
+  from {
+    rotate: -0.8deg;
+  }
+  to {
+    rotate: 0.8deg;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .duo,
   .duo > .duo-pane,
   .glance-working::after,
   .glance-breathe,
-  .glass-blob {
+  .glass-blob,
+  .lane-jiggle-a,
+  .lane-jiggle-b {
     transition: none;
     animation: none;
   }

@@ -19,16 +19,24 @@ import {
   liveThreads,
   rank,
 } from "./glance-board";
+import { ProjectLanesBoard } from "./project-lanes";
 
 /**
  * Alternative status boards for the laptop posture's upright screen. Each
  * answers "what needs me, what's running, what's about to run out" from
  * across a desk, with a different feel.
  */
-export const CONCEPTS = ["tiles", "lanes", "bubbles", "headline"] as const;
+export const CONCEPTS = [
+  "projects",
+  "tiles",
+  "lanes",
+  "bubbles",
+  "headline",
+] as const;
 export type Concept = (typeof CONCEPTS)[number];
 
 export const CONCEPT_LABEL: Record<Concept, string> = {
+  projects: "Projects",
   tiles: "Tiles",
   lanes: "Lanes",
   bubbles: "Bubbles",
@@ -310,7 +318,9 @@ export function StatusBoard({
           exit={{ opacity: 0, scale: 1.02, filter: "blur(8px)" }}
           transition={{ duration: 0.35 }}
         >
-          {concept === "lanes" ? (
+          {concept === "projects" ? (
+            <ProjectLanesBoard {...props} />
+          ) : concept === "lanes" ? (
             <LanesBoard {...props} />
           ) : concept === "bubbles" ? (
             <BubblesBoard {...props} />
