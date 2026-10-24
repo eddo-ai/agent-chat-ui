@@ -95,9 +95,18 @@ export function ThreadDetail({
     setBrief("");
     setTranscript([]);
     if (!source) return;
+    // Drop responses for a thread that is no longer selected, so a slow
+    // request can't put another thread's transcript into this handoff.
+    let current = true;
     getTranscript(source, thread.id)
-      .then(setTranscript)
-      .catch((e) => toast.error(`Could not load transcript: ${e.message}`));
+      .then((messages) => current && setTranscript(messages))
+      .catch(
+        (e) =>
+          current && toast.error(`Could not load transcript: ${e.message}`),
+      );
+    return () => {
+      current = false;
+    };
   }, [thread.id, source, targets, low]);
 
   const target = targets.find((t) => t.id === targetId);

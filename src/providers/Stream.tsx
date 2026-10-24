@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowRight } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey } from "@/lib/api-key";
+import { getPlatformApiKey } from "@/lib/coordinator/credentials";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";
 
@@ -147,8 +148,9 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   // For API key, use localStorage with env var fallback
+  // A key saved for this deployment in the coordinator wins over the global one.
   const [apiKey, _setApiKey] = useState(() => {
-    const storedKey = getApiKey();
+    const storedKey = getPlatformApiKey(apiUrl) ?? getApiKey();
     return storedKey || "";
   });
 

@@ -10,7 +10,7 @@ import type {
   ThreadState,
 } from "./types";
 
-const PLATFORMS_KEY = "coord:platforms";
+import { PLATFORMS_KEY } from "./credentials";
 const HANDOFFS_KEY = "coord:handoffs";
 
 /**
@@ -177,9 +177,11 @@ export function useOverview(
   // Apply the local handoff log, so threads handed to platforms we cannot
   // write to (feeds, manual targets) still show as handed off.
   const merged = useMemo(() => {
-    const handedOff = new Map(handoffs.map((h) => [h.fromThread, h]));
+    const handedOff = new Map(
+      handoffs.map((h) => [`${h.fromPlatform}:${h.fromThread}`, h]),
+    );
     return threads.map((t) => {
-      const h = handedOff.get(t.id);
+      const h = handedOff.get(`${t.platformId}:${t.id}`);
       return h && !t.handedOffTo
         ? { ...t, state: "handed_off" as const, handedOffTo: h.toPlatform }
         : t;
