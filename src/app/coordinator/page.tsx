@@ -9,6 +9,7 @@ import {
   usePosture,
 } from "@/components/coordinator/duo-layout";
 import { Overview } from "@/components/coordinator/overview";
+import { GlanceBoard } from "@/components/coordinator/glance-board";
 import { ThreadDetail } from "@/components/coordinator/thread-detail";
 import { PlatformSettings } from "@/components/coordinator/platform-settings";
 import {
@@ -69,6 +70,38 @@ function CoordinatorPage() {
       </div>
     );
 
+  const overview = (
+    <>
+      <Overview
+        projects={projects}
+        platforms={platforms}
+        errors={errors}
+        loading={loading}
+        selectedId={selected ?? undefined}
+        onSelect={(t) => setSelected(`${t.platformId}:${t.id}`)}
+        onRefresh={refresh}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+      <label className="text-muted-foreground flex items-center gap-2 p-4 text-xs">
+        Layout
+        <select
+          className="rounded border bg-transparent px-1 py-0.5"
+          value={postureParam ?? ""}
+          onChange={(e) =>
+            setPostureParam(
+              (e.target.value || null) as (typeof POSTURES)[number] | null,
+            )
+          }
+        >
+          <option value="">auto ({posture})</option>
+          {POSTURES.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </select>
+      </label>
+    </>
+  );
+
   return (
     <>
       <Toaster />
@@ -76,39 +109,18 @@ function CoordinatorPage() {
         posture={posture}
         secondaryOpen={!!thread}
         primary={
-          <>
-            <Overview
+          posture === "laptop" ? (
+            <GlanceBoard
               projects={projects}
               platforms={platforms}
-              errors={errors}
-              loading={loading}
               selectedId={selected ?? undefined}
               onSelect={(t) => setSelected(`${t.platformId}:${t.id}`)}
-              onRefresh={refresh}
-              onOpenSettings={() => setSettingsOpen(true)}
             />
-            <label className="text-muted-foreground flex items-center gap-2 p-4 text-xs">
-              Layout
-              <select
-                className="rounded border bg-transparent px-1 py-0.5"
-                value={postureParam ?? ""}
-                onChange={(e) =>
-                  setPostureParam(
-                    (e.target.value || null) as
-                      | (typeof POSTURES)[number]
-                      | null,
-                  )
-                }
-              >
-                <option value="">auto ({posture})</option>
-                {POSTURES.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-          </>
+          ) : (
+            overview
+          )
         }
-        secondary={detail}
+        secondary={posture === "laptop" && !thread ? overview : detail}
       />
       <PlatformSettings
         open={settingsOpen}

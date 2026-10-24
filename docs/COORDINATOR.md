@@ -77,14 +77,23 @@ and the suggested target is then one with a larger window.
 
 The layout is designed around dual-screen devices first:
 
-| Posture     | When                                 | Layout                                                             |
-| ----------- | ------------------------------------ | ------------------------------------------------------------------ |
-| `single`    | Phone, or a duo folded to one screen | Overview, then detail with a back button                           |
-| `wide`      | Laptop, tablet landscape             | Overview and detail side by side                                   |
-| `spanned-h` | Spanned side by side (book)          | Overview on the left screen, detail on the right, hinge kept clear |
-| `spanned-v` | Spanned top and bottom (laptop)      | Overview on top, handoff composer on the bottom screen             |
+| Posture     | When                                                  | Layout                                                                                         |
+| ----------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `single`    | Phone, or a duo folded to one screen                  | Overview, then detail with a back button                                                       |
+| `wide`      | Laptop, tablet landscape                              | Overview and detail side by side                                                               |
+| `spanned-h` | Spanned side by side (book)                           | Overview on the left screen, detail on the right, hinge kept clear                             |
+| `spanned-v` | Spanned flat, top and bottom                          | Overview on top, handoff composer on the bottom screen                                         |
+| `laptop`    | Folded like a laptop: top screen upright, bottom flat | Status board readable at a glance on top; list, handoff and controls on the flat bottom screen |
 
-Postures are detected with the `horizontal-viewport-segments` and
-`vertical-viewport-segments` media queries, and panes are sized with the
+Postures are detected with the `horizontal-viewport-segments`,
+`vertical-viewport-segments` and `device-posture: folded` media queries, and panes are sized with the
 `viewport-segment-*` env() values. `?posture=` or the Layout picker previews a
 posture on ordinary hardware.
+
+## Motion
+
+The UI should feel fun and fluid: postures morph into each other (animated
+grid tracks), the status board's counters pop when they change, working
+threads shimmer and threads that need you breathe, tiles reflow with spring
+layout animations, and a handed-off thread flies off the board as the send
+icon launches. All of it is turned off under `prefers-reduced-motion`.

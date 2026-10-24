@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
+  Send,
   ArrowLeft,
   ArrowRightLeft,
   Copy,
@@ -88,6 +90,8 @@ export function ThreadDetail({
   const [reason, setReason] = useState(low ? REASONS[0] : REASONS[1]);
   const [brief, setBrief] = useState("");
   const [busy, setBusy] = useState(false);
+  // Bumped on each successful handoff to replay the send animation.
+  const [sent, setSent] = useState(0);
 
   useEffect(() => {
     setTargetId(suggestTarget(targets, source, low)?.id ?? "");
@@ -159,6 +163,7 @@ export function ThreadDetail({
           model: model || target.model,
         });
         await record(threadId, url);
+        setSent((n) => n + 1);
         toast.success(`Handed off to ${target.name}`, {
           action: { label: "Open", onClick: () => window.open(url, "_blank") },
         });
@@ -173,6 +178,7 @@ export function ThreadDetail({
         }
         await copied;
         await record();
+        setSent((n) => n + 1);
         toast.success(
           target.launchUrl
             ? `Opened ${target.name}. The prompt is also on your clipboard.`
@@ -295,14 +301,35 @@ export function ThreadDetail({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            disabled={!target || busy}
-            onClick={handOff}
+          <motion.div
+            className="relative"
+            whileTap={{ scale: 0.94 }}
           >
-            {target?.kind === "langgraph"
-              ? `Start on ${target.name}`
-              : `Hand off to ${target?.name ?? "..."}`}
-          </Button>
+            <Button
+              disabled={!target || busy}
+              onClick={handOff}
+            >
+              <Send className="size-4" />
+              {target?.kind === "langgraph"
+                ? `Start on ${target.name}`
+                : `Hand off to ${target?.name ?? "..."}`}
+            </Button>
+            <AnimatePresence>
+              {sent > 0 && (
+                <motion.span
+                  key={sent}
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 left-4"
+                  initial={{ x: 0, y: "-50%", opacity: 1, rotate: 0 }}
+                  animate={{ x: 260, y: -90, opacity: 0, rotate: -20 }}
+                  transition={{ duration: 0.8, ease: [0.3, 0, 0.2, 1] }}
+                  onAnimationComplete={() => setSent(0)}
+                >
+                  <Send className="size-5 text-sky-500" />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.div>
           <Button
             variant="outline"
             disabled={!prompt}

@@ -11,20 +11,30 @@ import { ReactNode, useEffect, useState } from "react";
  * - spanned-h: app spans two screens side by side (duo held like a book).
  *              Overview on the left screen, detail on the right, with the
  *              hinge kept clear.
- * - spanned-v: app spans two screens top and bottom (duo held like a
- *              laptop). Overview on top, detail and handoff composer on the
- *              bottom screen, where the keyboard is.
+ * - spanned-v: app spans two screens top and bottom, lying flat.
+ *              Overview on top, detail and handoff composer on the bottom.
+ * - laptop:    folded like a laptop, top screen upright and bottom screen
+ *              flat. The upright screen is a status board readable at a
+ *              glance; the flat one holds the list, handoff and controls.
  */
-export const POSTURES = ["single", "wide", "spanned-h", "spanned-v"] as const;
+export const POSTURES = [
+  "single",
+  "wide",
+  "spanned-h",
+  "spanned-v",
+  "laptop",
+] as const;
 export type Posture = (typeof POSTURES)[number];
 
 const SPANNED_H = "(horizontal-viewport-segments: 2)";
 const SPANNED_V = "(vertical-viewport-segments: 2)";
+const LAPTOP = "(device-posture: folded) and (vertical-viewport-segments: 2)";
 const WIDE =
   "(min-width: 1024px), (orientation: landscape) and (min-width: 720px)";
 
 function detectPosture(): Posture {
   if (typeof window === "undefined") return "single";
+  if (window.matchMedia(LAPTOP).matches) return "laptop";
   if (window.matchMedia(SPANNED_H).matches) return "spanned-h";
   if (window.matchMedia(SPANNED_V).matches) return "spanned-v";
   if (window.matchMedia(WIDE).matches) return "wide";
@@ -45,7 +55,7 @@ export function usePosture(override?: Posture | null): Posture {
     }
     const update = () => setPosture(detectPosture());
     update();
-    const queries = [SPANNED_H, SPANNED_V, WIDE].map((q) =>
+    const queries = [LAPTOP, SPANNED_H, SPANNED_V, WIDE].map((q) =>
       window.matchMedia(q),
     );
     queries.forEach((q) => q.addEventListener("change", update));

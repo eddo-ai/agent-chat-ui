@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
 import { RefreshCw, Settings, Download, BatteryLow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -207,7 +208,11 @@ export function Overview({
             {project.threads.map((t) => {
               const platform = byId.get(t.platformId);
               return (
-                <li key={`${t.platformId}:${t.id}`}>
+                <motion.li
+                  key={`${t.platformId}:${t.id}`}
+                  layout
+                  transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                >
                   <button
                     onClick={() => onSelect(t)}
                     className={cn(
@@ -233,7 +238,7 @@ export function Overview({
                       </span>
                     </span>
                   </button>
-                </li>
+                </motion.li>
               );
             })}
           </ul>
